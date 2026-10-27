@@ -1,0 +1,23 @@
+{
+  "name": "德州撲克離線記帳 V6.0 測試版",
+  "short_name": "撲克V6測試",
+  "description": "V6.0 獨立測試版：保留原有離線記帳功能，分享功能尚未整合",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f5f4",
+  "theme_color": "#142b2a",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
