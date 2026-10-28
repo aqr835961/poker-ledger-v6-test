@@ -1,4 +1,4 @@
-const CACHE = 'poker-ledger-v6-share-20261028c';
+const CACHE = 'poker-ledger-v6-1-0-release-20261028';
 const PREFIX = 'poker-ledger-v6-test-';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './config.js', './ultimate.js', './viewer.html', './viewer.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())));
