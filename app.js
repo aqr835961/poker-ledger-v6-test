@@ -17,13 +17,14 @@ let mergeSelected=[],mergeDraft=null,mergeCurrent=null,mergeEditing=false;
 let state={version:2,sessions:[]},db,current=null,screen='home',form=draft(),mode='round',editing=null,viewEntry=null,createTitle='',createNames=['',''],createStart='3000',editNames=[],editTitle='',editStart='3000',editScope='future',editFrom='1',editRound='1',entryStart='3000';
 // V6.0 experimental share: tokens are scoped per session and stored only on this device.
 const SHARE_API='https://gvvrgatpnmxpiqmvyfwa.supabase.co/functions/v1/';
+function shareAuthHeaders(){const key=globalThis.V6_SUPABASE_ANON_JWT;if(!key||!/^eyJ[A-Za-z0-9_-]+\./.test(key))throw Error('尚未設定 Legacy anon JWT，請依 V6-SHARE-README.md 設定 config.js');return {'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key};}
 const shareKey=id=>'v6-share-'+id;
 const shareInfo=id=>{try{return JSON.parse(localStorage.getItem(shareKey(id))||'null')}catch{return null}};
 const shareStore=(id,x)=>localStorage.setItem(shareKey(id),JSON.stringify(x));
 const shareUrl=t=>new URL('./viewer.html?token='+encodeURIComponent(t),location.href).href;
 let shareSyncBusy=false,shareSyncQueued=false,shareSyncTimer=null,shareSyncError='';
 async function shareRequest(endpoint,payload){
- const res=await fetch(SHARE_API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),cache:'no-store'});
+ const res=await fetch(SHARE_API+endpoint,{method:'POST',headers:shareAuthHeaders(),body:JSON.stringify(payload),cache:'no-store'});
  const data=await res.json().catch(()=>({}));if(!res.ok)throw Error((data.error||'HTTP '+res.status)+' ('+res.status+')');return data;
 }
 async function shareCreate(id){

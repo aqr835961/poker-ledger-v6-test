@@ -8,3 +8,7 @@
 - 目前只測試單一管理裝置，409 版本衝突會停止覆寫；尚未完成離線佇列、跨裝置管理者接手及完整安全驗收。
 - 資料格式以 `ledger_data.session` 封裝單場牌局，必須確認 Edge Function 對資料格式無額外限制。
 - 分享連結屬持有即可讀取的秘密，請勿公開張貼。
+
+
+## V6.0.2 JWT authentication fix
+Before uploading to GitHub, edit `config.js` and replace `PASTE_LEGACY_ANON_PUBLIC_JWT_HERE` with the full **Legacy anon / public JWT** from Supabase Dashboard > Project Settings > API Keys > Legacy anon, service_role API keys. This JWT is designed to be public, but **NEVER** put service_role, secret, admin_token, or JWT signing secret here. Both share-write and share-read now send `apikey` and `Authorization: Bearer <anon JWT>`. Keep Edge Function Verify JWT enabled. If JWT missing, UI displays a configuration error. Update the entire ZIP root to the test repository; this is NOT for production V5.0.1.

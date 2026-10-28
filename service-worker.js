@@ -1,6 +1,6 @@
-const CACHE = 'poker-ledger-v6-share-20261028b';
+const CACHE = 'poker-ledger-v6-share-20261028c';
 const PREFIX = 'poker-ledger-v6-test-';
-const ASSETS = ['./', './index.html', './styles.css', './app.js', './ultimate.js', './viewer.html', './viewer.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const ASSETS = ['./', './index.html', './styles.css', './app.js', './config.js', './ultimate.js', './viewer.html', './viewer.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith(PREFIX) && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', event => {
