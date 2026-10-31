@@ -19,6 +19,8 @@ let state={version:2,sessions:[]},db,current=null,screen='home',form=draft(),mod
 const SHARE_API='https://gvvrgatpnmxpiqmvyfwa.supabase.co/functions/v1/';
 function shareAuthHeaders(){const key=globalThis.V6_SUPABASE_ANON_JWT;if(!key||!/^eyJ[A-Za-z0-9_-]+\./.test(key))throw Error('尚未設定 Legacy anon JWT，請依 V6-SHARE-README.md 設定 config.js');return {'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key};}
 const shareKey=id=>'v6-share-'+id;
+const shareSnapshotKey=id=>'v6-share-snapshot-'+id;
+const sharePayload=s=>JSON.stringify({session:s,test_mode:true});
 const shareInfo=id=>{try{return JSON.parse(localStorage.getItem(shareKey(id))||'null')}catch{return null}};
 const shareStore=(id,x)=>localStorage.setItem(shareKey(id),JSON.stringify(x));
 const shareUrl=t=>new URL('./viewer.html?token='+encodeURIComponent(t),location.href).href;
@@ -34,23 +36,50 @@ async function shareCreate(id){
  const data=await shareRequest('share-write',{action:'create',ledger_data:{session:s,test_mode:true}});
  if(!data.share_token||!data.admin_token||!Number.isInteger(data.data_version))throw Error('伺服器未回傳完整分享憑證');
  shareStore(id,{token:data.share_token,admin:data.admin_token,version:data.data_version});
+  localStorage.setItem(shareSnapshotKey(id),sharePayload(s));
  alert('建立成功！請按「查看分享網址」複製給玩家。');render();
 }
+// V6.1.1: Serialize share writes and skip identical snapshots. Never force-overwrite on 409.
 async function sharePush(){
  if(shareSyncBusy){shareSyncQueued=true;return;}
  shareSyncBusy=true;
  try{
   do{
    shareSyncQueued=false;
-   for(const s of state.sessions){const info=shareInfo(s.id);if(!info)continue;
-    try{const data=await shareRequest('share-write',{action:'update',share_token:info.token,admin_token:info.admin,expected_version:info.version,ledger_data:{session:structuredClone(s),test_mode:true}});
-     if(!Number.isInteger(data.new_version))throw Error('未收到新版本號');info.version=data.new_version;shareStore(s.id,info);shareSyncError='';
-    }catch(e){shareSyncError=e.message;console.warn('V6 share sync stopped:',e);if(e.message.includes('409')){alert('分享同步發生版本衝突，已停止自動覆寫。請先備份並檢查，勿在多台裝置同時編輯。');return;} }
+   for(const s of state.sessions){
+    const info=shareInfo(s.id);if(!info)continue;
+    const snapshot=sharePayload(s);
+    if(localStorage.getItem(shareSnapshotKey(s.id))===snapshot)continue;
+    try{
+     const data=await shareRequest('share-write',{
+      action:'update',share_token:info.token,admin_token:info.admin,
+      expected_version:info.version,ledger_data:JSON.parse(snapshot)
+     });
+     if(!Number.isInteger(data.new_version))throw Error('未收到新版本號');
+     info.version=data.new_version;
+     shareStore(s.id,info);
+     // Only mark the exact acknowledged payload as synced.
+     localStorage.setItem(shareSnapshotKey(s.id),snapshot);
+     shareSyncError='';
+     // A change made while awaiting the server must be sent afterward.
+     if(sharePayload(s)!==snapshot)shareSyncQueued=true;
+    }catch(e){
+     shareSyncError=e.message;
+     console.warn('V6 share sync stopped:',e);
+     if(e.message.includes('409')){
+      alert('分享同步發生版本衝突，已停止自動覆寫。請先備份並檢查，勿在多台裝置同時編輯。');
+      return;
+     }
+    }
    }
   }while(shareSyncQueued);
  }finally{shareSyncBusy=false;}
 }
-function shareSchedule(){if(!state.sessions.some(s=>shareInfo(s.id)))return;clearTimeout(shareSyncTimer);shareSyncTimer=setTimeout(()=>sharePush().catch(e=>console.warn(e)),1000);}
+function shareSchedule(){
+ if(!state.sessions.some(s=>shareInfo(s.id)))return;
+ clearTimeout(shareSyncTimer);
+ shareSyncTimer=setTimeout(()=>sharePush().catch(e=>console.warn(e)),1000);
+}
 function shareShow(id){const info=shareInfo(id);if(!info)return;const url=shareUrl(info.token);navigator.clipboard?.writeText(url).then(()=>alert('分享網址已複製：\n'+url)).catch(()=>prompt('複製唯讀分享網址：',url))||prompt('唯讀分享網址：',url);}
 const byId=()=>state.sessions.find(s=>s.id===current);
 const active=s=>s.players.filter(p=>p.active);
